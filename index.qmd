@@ -18,10 +18,11 @@ head(cookie)
 ```
 
 ```{python}
-import pandas
-cookie_python = pandas.read_csv('choc_chip_cookie_ingredients.csv')
+import pandas as pd
+cookie_python = pd.read_csv('choc_chip_cookie_ingredients.csv')
 print(cookie_python)
 ```
+
 
 
 ## Exploratory Data Analysis
@@ -42,7 +43,7 @@ Generate at least 5 questions you might explore using this database of cookie in
 2. For a single ingredient are the units consistent or does it requires standardization before analysis?
 3. Are there any extreme outliers that might indicate data entry errors?
 4. Are there any missing data?
-5. Is there a correlation between the amount of flour and the amount of sugar?
+5. How does the amount of sugar change as the amount of flour increases, is the relationship linear, or does it vary widely?
 
 
 ### Skimming the Data
@@ -66,9 +67,11 @@ from skimpy import skim
 skim(cookie_python)
 ```
 
+
+
 [Part 2] Write 1-2 sentences about what you can tell from each summary display you generate. Did you discover anything new about the data?
 
-Both summaries show the basic data structure, but I think that skimpy is more helpful for cleaning data because it highlights specific issues like outliers and messy text.
+Both summaries confirm that the dataset has 1990 rows, but both skimpy and skimr show that there are 1010 missing values in the Rating column and a maximum Quantity of 48, suggesting potential outliers.
 
 
 ### Generating Tables
@@ -79,33 +82,37 @@ You may want to use the `dplyr` package in R (`group_by` or `count` functions), 
 [Part 1] Using R and Python, generate a table that shows what **proportion** of recipes contain each type of ingredient, for the most common 20 ingredients.
 ```{r}
 library(dplyr)
+
 total <- n_distinct(cookie$Recipe_Index)
 
-top <- cookie |>
+top_ingredients <- cookie |>
   group_by(Ingredient) |>
   summarise(count = n_distinct(Recipe_Index)) |>
-  mutate(proportions = count / total) |>
-  arrange(desc(proportions))
-  head(20)
-  
-print(top)
+  mutate(proportion = count / total) |>
+  slice_max(order_by = proportion, n = 20) 
+
+print(top_ingredients)
 ```
 
 ```{python}
 total_recipes = cookie_python['Recipe_Index'].nunique()
-
 ingredient_counts = cookie_python.groupby('Ingredient')['Recipe_Index'].nunique()
+proportions = (ingredient_counts / total_recipes).sort_values(ascending=False)
 
-top_ingridient = (ingredient_counts / total_recipes).sort_values(ascending=False).head(20)
+threshold = proportions.iloc[19]
+
+top_ingredients = proportions[proportions >= threshold]
+
+print(top_ingredients)
 ```
 
 
 [Part 2] Print out a character string that lists all of the ingredients that do not appear in at least 20 recipes.
 ```{r}
 rare <- cookie |>
-  group_by(Ingredient)|>
+  group_by(Ingredient) |>
   summarise(n = n_distinct(Recipe_Index)) |>
-  filter(n < 20)|>
+  filter(n < 20) |>
   pull(Ingredient)
 
 toString(rare)
@@ -113,16 +120,11 @@ toString(rare)
 
 ```{python}
 counts = cookie_python.groupby('Ingredient')['Recipe_Index'].nunique()
-
-# Filter for those with count < 20
 rare = counts[counts < 20].index.tolist()
-
-# Print as a joined string
 print(", ".join(rare))
 ```
 
 
-(Delete this note, but you can include data values inline in markdown text by using backticks, at least in R. For instance, here is R's built in value for pi: `r pi`. Unfortunately, this doesn't work in python using the knitr markdown engine, but you can print the list out in python anyways using a code chunk.)
 
 ### Visualization
 
@@ -133,14 +135,14 @@ Using whatever plotting system you are comfortable with in R or python, see if y
 library(ggplot2)
 library(dplyr)
 
-top_10 <- cookie |>
+top_20 <- cookie |>
   count(Ingredient, sort = TRUE) |>
-  head(10)
+  slice_max(order_by = n, n = 20)
 
-ggplot (top_10, aes(x = reorder(Ingredient, n), y =n)) +
-  geom_col()+
+ggplot(top_20, aes(x = reorder(Ingredient, n), y = n)) +
+  geom_col() +
   labs(
-    title = "Top 10 Most Common Cookie Ingredients",
+    title = "Top 20 Most Common Cookie Ingredients",
     x = "Ingredient",
     y = "Number of Recipes"
   ) +
@@ -151,4 +153,4 @@ ggplot (top_10, aes(x = reorder(Ingredient, n), y =n)) +
 
 [Part 2] Write 2-3 sentences about what you can learn from that plot and what directions you might want to investigate from here.
 
-The plot shows that egg, vanilla and all purpose flour are the top 3 most used ingredient. Based on this, I would like to compare recipes and see how ingredient amounts affect the final cookie.
+The plot shows that eggs, vanilla, and flour are the top 3 ingredients. Looking at the top 20 ingredients also reveals less common additions like walnuts and oats. Based on this, I would like to compare recipes to see how the amounts of the main ingredients affect the final cookie.
