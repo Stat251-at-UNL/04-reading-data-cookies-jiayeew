@@ -39,11 +39,11 @@ Exploratory data analysis is the process of getting familiar with your dataset. 
 
 Generate at least 5 questions you might explore using this database of cookie ingredients.
 
-1. Which ingredients appear most frequently across cookie recipes?
+1. Which specific ingredients appear most frequently across the unique cookie recipes?
 2. For a single ingredient are the units consistent or does it requires standardization before analysis?
-3. Are there any extreme outliers that might indicate data entry errors?
-4. Are there any missing data?
-5. How does the amount of sugar change as the amount of flour increases, is the relationship linear, or does it vary widely?
+3. Are there any extreme outliers in the `Quantity` column that might indicate data entry errors?
+4. Are the missing values in the `Rating` column Missing Completely at Random (MCAR), or are they Missing Not at Random (MNAR)?
+5. Do certain ingredients (like oats and raisins) usually show up together, allowing us to group the recipes into different types of cookies?
 
 
 ### Skimming the Data
